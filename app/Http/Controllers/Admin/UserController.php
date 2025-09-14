@@ -6,32 +6,24 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Inertia\Inertia;
+use App\Http\Requests\Admin\User\UserIndexRequest;
 
 class UserController extends Controller
 {
-    public function index(Request $request)
+    public function index(UserIndexRequest $request)
     {
-        $perPageOptions = [10, 25, 50, 100];
-        $perPage = (int) $request->query('per_page', 10);
-        if (!in_array($perPage, $perPageOptions)) {
-            $perPage = 10;
-        }
+        $filters = $request->validated();
+        $perPage = $filters['per_page'] ?? 10;
 
         $users = User::query()
-            ->when($request->query('search'), function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-                });
-            })
-            ->ordered($request->query('sort'), $request->query('direction', 'asc'))
+            ->applyFilters($filters)
             ->paginate($perPage)
             ->withQueryString();
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
-            'perPageOptions' => $perPageOptions,
-            'filters' => $request->only(['search', 'sort', 'direction', 'per_page']),
+            'perPageOptions' => UserIndexRequest::PER_PAGE_OPTIONS,
+            'filters' => $filters,
         ]);
     }
 }

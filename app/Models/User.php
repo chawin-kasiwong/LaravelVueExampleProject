@@ -47,11 +47,28 @@ class User extends Authenticatable
         ];
     }
 
+    public function scopeApplyFilters(Builder $query, array $filters): Builder
+    {
+        return $query
+            ->search($filters['search'] ?? null)
+            ->ordered($filters['sort'] ?? null, $filters['direction'] ?? 'asc');
+    }
+
+    public function scopeSearch(Builder $query, ?string $search): Builder
+    {
+        return $query->when($search, function (Builder $q, string $search) {
+            $q->where(function (Builder $subQuery) use ($search) {
+                $subQuery->where('name', 'like', "%{$search}%")
+                         ->orWhere('email', 'like', "%{$search}%");
+            });
+        });
+    }
+
     public function scopeOrdered(Builder $query, ?string $sort, string $direction = 'asc'): Builder
     {
         $allowed = ['name', 'email'];
         if (!$sort || !in_array($sort, $allowed, true)) {
-            return $query;
+            return $query->latest();
         }
 
         return $query->orderBy($sort, $direction);
