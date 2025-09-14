@@ -18,6 +18,12 @@ class UserController extends Controller
         }
 
         $users = User::query()
+            ->when($request->query('search'), function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+                });
+            })
             ->ordered($request->query('sort'), $request->query('direction', 'asc'))
             ->paginate($perPage)
             ->withQueryString();

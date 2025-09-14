@@ -3,6 +3,7 @@ import { ref, watch, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import type { PropType } from 'vue';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -49,6 +50,8 @@ const props = defineProps({
 
 const isLoading = ref(false);
 const perPage = ref(Number(props.users.per_page));
+const search = ref(props.filters.search || '');
+let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
 const columns = [
   { key: 'name', label: 'Name', sortable: true },
@@ -89,11 +92,23 @@ const handlePageChange = (page: number) => {
   updateQuery({ page });
 };
 
-watch(perPage, (newPageSize) => {
-  updateQuery({
-    per_page: newPageSize,
-    page: 1,
-  });
+watch([search, perPage], ([newSearch, newPerPage], [oldSearch, oldPerPage]) => {
+  if (newSearch !== oldSearch) {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      updateQuery({
+        search: newSearch,
+        per_page: newPerPage,
+        page: 1,
+      });
+    }, 300);
+  }
+  else {
+    updateQuery({
+      per_page: newPerPage,
+      page: 1,
+    });
+  }
 });
 </script>
 
@@ -101,7 +116,6 @@ watch(perPage, (newPageSize) => {
   <div>
     <!-- Per Page Selector -->
     <div class="flex items-center gap-2 mb-4">
-      <label class="text-sm text-muted-foreground">Rows per page</label>
       <Select v-model:model-value="perPage">
         <SelectTrigger class="w-24">
           <SelectValue placeholder="Select" />
@@ -114,6 +128,8 @@ watch(perPage, (newPageSize) => {
           </SelectGroup>
         </SelectContent>
       </Select>
+      <label class="text-sm text-muted-foreground">Rows per page</label>
+      <Input v-model="search" placeholder="Search..." class="ml-auto w-1/3" />
     </div>
 
     <!-- Data Table -->
@@ -164,6 +180,7 @@ watch(perPage, (newPageSize) => {
           :items-per-page="perPage"
           :total="users.total"
           :default-page="users.current_page"
+          :key="`${users.current_page}-${users.total}`"
           @update:page="handlePageChange"
         >
           <PaginationFirst />
