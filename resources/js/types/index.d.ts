@@ -35,3 +35,31 @@ export interface User {
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;
+
+// For Table Filters
+export interface Filters {
+  search: string;
+  sort: string;
+  direction: 'asc' | 'desc';
+  perPage: number;
+}
+
+// For Table Pagination
+export interface PaginatedResponse<T> {
+  data: T[];
+  links: {
+    first: string | null;
+    last: string | null;
+    prev: string | null;
+    next: string | null;
+  };
+  meta: {
+    current_page: number;
+    from: number;
+    last_page: number;
+    path: string;
+    per_page: number;
+    to: number;
+    total: number;
+  };
+}
