@@ -30,7 +30,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-
+import UserModal from './UserModal.vue';
 import type { PaginatedResponse, User, Filters } from '@/types';
 
 const props = defineProps({
@@ -52,6 +52,13 @@ const isLoading = ref(false);
 const perPage = ref(Number(props.users.per_page));
 const search = ref(props.filters.search || '');
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+const selectedUser = ref<User | null>(null);
+const isModalOpen = ref(false);
+
+const viewUser = (user: User) => {
+  selectedUser.value = user;
+  isModalOpen.value = true;
+};
 
 const columns = [
   { key: 'name', label: 'Name', sortable: true },
@@ -156,7 +163,7 @@ watch([search, perPage], ([newSearch, newPerPage], [oldSearch, oldPerPage]) => {
               <TableCell>{{ user.name }}</TableCell>
               <TableCell>{{ user.email }}</TableCell>
               <TableCell>
-                <Button variant="outline">View</Button>
+                <Button variant="outline" @click="viewUser(user)">View</Button>
               </TableCell>
             </TableRow>
           </template>
@@ -202,4 +209,10 @@ watch([search, perPage], ([newSearch, newPerPage], [oldSearch, oldPerPage]) => {
       </div>
     </div>
   </div>
+  <UserModal
+    v-if="selectedUser"
+    v-model:open="isModalOpen"
+    :user="selectedUser"
+    @update:open="(value) => !value && (selectedUser = null)"
+  />
 </template>
