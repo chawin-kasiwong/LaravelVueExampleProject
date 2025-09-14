@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Builder;
 
 class User extends Authenticatable
 {
@@ -44,5 +45,15 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function scopeOrdered(Builder $query, ?string $sort, string $direction = 'asc'): Builder
+    {
+        $allowed = ['name', 'email'];
+        if (!$sort || !in_array($sort, $allowed, true)) {
+            return $query;
+        }
+
+        return $query->orderBy($sort, $direction);
     }
 }
